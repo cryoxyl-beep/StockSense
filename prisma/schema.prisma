@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  documents    StockDocument[]
+
+  @@index([email])
+}
+
+model Warehouse {
+  id        String         @id @default(cuid())
+  name      String
+  code      String         @unique
+  address   String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  balances  StockBalance[]
+
+  @@index([code])
+}
+
+model Product {
+  id           String              @id @default(cuid())
+  name         String
+  sku          String              @unique
+  category     String              @default("General")
+  uom          String              @default("Unit")
+  unitPrice    Decimal
+  reorderLevel Int                 @default(10)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  balances     StockBalance[]
+  lines        StockDocumentLine[]
+  ledger       StockLedger[]
+
+  @@index([sku])
+  @@index([category])
+}
+
+model StockBalance {
+  id          String    @id @default(cuid())
+  productId   String
+  warehouseId String
+  quantity    Int       @default(0)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId])
+  @@index([warehouseId])
+}
+
+enum DocumentType {
+  RECEIPT
+  DELIVERY
+}
+
+enum DocumentStatus {
+  DRAFT
+  DONE
+}
+
+model StockDocument {
+  id          String              @id @default(cuid())
+  type        DocumentType
+  status      DocumentStatus      @default(DRAFT)
+  partnerName String
+  invoiceNo   String
+  docDate     DateTime
+  createdById String
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  lines       StockDocumentLine[]
+  ledger      StockLedger[]
+
+  @@index([type, status])
+  @@index([docDate])
+}
+
+model StockDocumentLine {
+  id         String        @id @default(cuid())
+  documentId String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal
+  document   StockDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  product    Product       @relation(fields: [productId], references: [id])
+
+  @@index([documentId])
+  @@index([productId])
+}
+
+enum MovementType {
+  RECEIPT
+  DELIVERY
+}
+
+model StockLedger {
+  id            String        @id @default(cuid())
+  movement      MovementType
+  quantityDelta Int
+  lineTotal     Decimal
+  at            DateTime      @default(now())
+  productId     String
+  documentId    String
+  product       Product       @relation(fields: [productId], references: [id])
+  document      StockDocument @relation(fields: [documentId], references: [id])
+
+  @@index([at])
+  @@index([productId])
+  @@index([documentId])
+}
