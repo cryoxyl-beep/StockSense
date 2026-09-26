@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { StockTable } from "@/components/StockTable";
 
 export default function StockPage() {

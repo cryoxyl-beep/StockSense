@@ -12,10 +12,6 @@ export function QRScannerGate({ children, requiredRole = "ADMIN" }: { children: 
 
   useEffect(() => {
     // Check if they are already authorized in this session state (could use cookies for persistence, but memory is fine for a demo)
-    const authFlag = sessionStorage.getItem("qr_auth");
-    if (authFlag === "true") {
-      setAuthorized(true);
-    }
   }, []);
 
   const startScanner = () => {
@@ -47,7 +43,6 @@ export function QRScannerGate({ children, requiredRole = "ADMIN" }: { children: 
             if (data.ok && data.role === requiredRole) {
               scanner.clear();
               setAuthorized(true);
-              sessionStorage.setItem("qr_auth", "true");
             } else {
               setError("Unauthorized: Invalid QR or insufficient role.");
               scanner.resume();
