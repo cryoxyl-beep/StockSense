@@ -12,7 +12,10 @@ export async function GET() {
   const [productCount, balances, pendingReceipts, pendingDeliveries] = await Promise.all([
     prisma.product.count(),
     prisma.stockBalance.findMany({
-      include: { product: true },
+      select: {
+        quantity: true,
+        product: { select: { reorderLevel: true } },
+      },
     }),
     prisma.stockDocument.count({
       where: { type: DocumentType.RECEIPT, status: DocumentStatus.DRAFT },
