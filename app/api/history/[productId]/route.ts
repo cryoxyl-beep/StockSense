@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { verifyAuth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const user = await verifyAuth();
+    const user = await getSession();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
     
     const { productId } = await params;
