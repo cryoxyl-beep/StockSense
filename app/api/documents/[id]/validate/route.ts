@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { InventoryError, validateDelivery, validateReceipt } from "@/lib/inventory";

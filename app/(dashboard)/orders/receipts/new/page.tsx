@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { DocumentForm } from "@/components/DocumentForm";
 
 export default function NewReceiptPage() {

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { DocumentStatus, DocumentType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";

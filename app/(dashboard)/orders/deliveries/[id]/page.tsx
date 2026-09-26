@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { DocumentDetail } from "@/components/DocumentDetail";
 
 export default async function DeliveryDetailPage({

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { DocumentList } from "@/components/DocumentList";
 
 export default function ReceiptsPage() {

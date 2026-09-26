@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { InventoryForms } from "@/components/InventoryForms";
 import { QRScannerGate } from "@/components/QRScannerGate";
 
