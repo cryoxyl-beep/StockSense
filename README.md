@@ -215,36 +215,48 @@ stocksense/
 
 ---
 
-## Getting started
+## Current scope
 
-> **Note:** This repository is being bootstrapped. Once the application scaffold lands on `main`, use the steps below.
+This revision is the foundation and authentication slice:
+
+- App shell and placeholder routes for the dashboard, products, operations, warehouses, and profile
+- Prisma schema, initial migration, and seed data
+- Credential sign-in, registration for inventory managers and warehouse staff, and OTP password reset
+
+Product editing, warehouse editing, stock mutations, and live dashboard KPIs are not in this slice. Dashboard counts render as em dashes.
+
+## Getting started
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org) 20+
-- [PostgreSQL](https://www.postgresql.org) 15+
-- npm, pnpm, or yarn
+- [PostgreSQL](https://www.postgresql.org) 16 (or Docker, via `docker compose up -d`)
+- npm
 
-### Install and run (upcoming)
+### Install and run
 
 ```bash
 git clone https://github.com/cryoxyl-beep/StockSense.git
 cd StockSense
 npm install
-cp .env.example .env   # set DATABASE_URL, AUTH_SECRET, etc.
-npx prisma migrate dev
+cp .env.example .env   # set DATABASE_URL, AUTH_SECRET, and AUTH_URL
+npx prisma migrate deploy
+npx prisma db seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) for the app shell and dashboard.
+Open [http://localhost:3000](http://localhost:3000). Unauthenticated visits go to sign-in. The seeded admin is `admin@stocksense.local` / `Admin123!`.
 
-### Useful scripts (upcoming)
+Password reset uses [Resend](https://resend.com) when `RESEND_API_KEY` is set. Without that key, the code is logged. Outside production the forgot-password response also includes `devOtp` so the page can show it.
+
+### Useful scripts
 
 ```bash
 npx prisma validate
 npx prisma generate
+npm run lint
+npm run typecheck
 npm run build
-npx tsc --noEmit
 ```
 
 ---
