@@ -7,7 +7,7 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [productCount, balances, pendingReceipts, pendingDeliveries] = await Promise.all([
+  const [productCount, balances, pendingReceipts, pendingDeliveries, pendingTransfers] = await Promise.all([
     prisma.product.count(),
     prisma.stockBalance.findMany({
       include: { product: true },
@@ -17,6 +17,9 @@ export async function GET() {
     }),
     prisma.stockDocument.count({
       where: { type: DocumentType.DELIVERY, status: DocumentStatus.DRAFT },
+    }),
+    prisma.stockDocument.count({
+      where: { type: DocumentType.TRANSFER, status: DocumentStatus.DRAFT },
     }),
   ]);
 
@@ -29,5 +32,6 @@ export async function GET() {
     lowStock,
     pendingReceipts,
     pendingDeliveries,
+    pendingTransfers,
   });
 }

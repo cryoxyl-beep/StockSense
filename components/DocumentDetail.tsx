@@ -11,6 +11,8 @@ type Doc = {
   partnerName: string;
   invoiceNo: string;
   docDate: string;
+  sourceWarehouse?: { name: string; code: string } | null;
+  targetWarehouse?: { name: string; code: string } | null;
   lines: {
     quantity: number;
     unitPrice: string;
@@ -57,10 +59,7 @@ export function DocumentDetail({
     return <p className="text-zinc-500">Loading…</p>;
   }
 
-  const total = doc.lines.reduce(
-    (s, l) => s + Number(l.unitPrice) * l.quantity,
-    0,
-  );
+  const total = doc.lines.reduce((s, l) => s + Number(l.unitPrice) * l.quantity, 0);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -73,21 +72,17 @@ export function DocumentDetail({
             <p className="text-xs text-zinc-500">Order ID</p>
             <p className="font-mono text-sm">{doc.id}</p>
           </div>
-          <span
-            className={
-              doc.status === "DONE" ? "text-emerald-400" : "text-amber-600 text-amber-700 font-medium"
-            }
-          >
+          <span className={doc.status === "DONE" ? "text-emerald-400" : "text-amber-600 text-amber-700 font-medium"}>
             {doc.status}
           </span>
         </div>
-        <dl className="mt-6 grid gap-4 sm:grid-cols-3 text-sm">
+        <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-3">
           <div>
-            <dt className="text-zinc-500">Partner</dt>
+            <dt className="text-zinc-500">Reference</dt>
             <dd>{doc.partnerName}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Invoice</dt>
+            <dt className="text-zinc-500">No.</dt>
             <dd>{doc.invoiceNo}</dd>
           </div>
           <div>
@@ -95,11 +90,16 @@ export function DocumentDetail({
             <dd>{new Date(doc.docDate).toLocaleDateString()}</dd>
           </div>
         </dl>
+        {(doc.sourceWarehouse || doc.targetWarehouse) && (
+          <p className="mt-4 text-sm text-zinc-600">
+            Route: {doc.sourceWarehouse ? `${doc.sourceWarehouse.name} (${doc.sourceWarehouse.code})` : "—"} → {doc.targetWarehouse ? `${doc.targetWarehouse.name} (${doc.targetWarehouse.code})` : "—"}
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-zinc-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-50 text-zinc-600 border-b border-zinc-200">
+          <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600">
             <tr>
               <th className="px-4 py-2 text-left">Product</th>
               <th className="px-4 py-2 text-left">Qty</th>
@@ -113,9 +113,7 @@ export function DocumentDetail({
                 <td className="px-4 py-2">{line.product.name}</td>
                 <td className="px-4 py-2">{line.quantity}</td>
                 <td className="px-4 py-2">₹{Number(line.unitPrice).toFixed(2)}</td>
-                <td className="px-4 py-2">
-                  ₹{(Number(line.unitPrice) * line.quantity).toFixed(2)}
-                </td>
+                <td className="px-4 py-2">₹{(Number(line.unitPrice) * line.quantity).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

@@ -10,6 +10,12 @@ type Product = {
   unitPrice: string;
 };
 
+type Warehouse = {
+  id: string;
+  name: string;
+  code: string;
+};
+
 type Line = {
   productId: string;
   quantity: string;
@@ -21,15 +27,18 @@ export function DocumentForm({
   partnerLabel,
   listHref,
 }: {
-  type: "RECEIPT" | "DELIVERY";
+  type: "RECEIPT" | "DELIVERY" | "TRANSFER";
   partnerLabel: string;
   listHref: string;
 }) {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [partnerName, setPartnerName] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [docDate, setDocDate] = useState(new Date().toISOString().slice(0, 10));
+  const [sourceWarehouseId, setSourceWarehouseId] = useState("");
+  const [targetWarehouseId, setTargetWarehouseId] = useState("");
   const [lines, setLines] = useState<Line[]>([
     { productId: "", quantity: "1", unitPrice: "" },
   ]);
@@ -37,19 +46,30 @@ export function DocumentForm({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((data: Product[]) => {
-        setProducts(data);
-        if (data[0]) {
+    Promise.all([fetch("/api/products"), fetch("/api/warehouses")])
+      .then(async ([productsRes, warehousesRes]) => {
+        const productsData = (await productsRes.json()) as Product[];
+        const warehousesData = (await warehousesRes.json()) as Warehouse[];
+        setProducts(productsData);
+        setWarehouses(warehousesData);
+
+        if (productsData[0]) {
           setLines([
             {
-              productId: data[0].id,
+              productId: productsData[0].id,
               quantity: "1",
-              unitPrice: String(data[0].unitPrice),
+              unitPrice: String(productsData[0].unitPrice),
             },
           ]);
         }
+
+        if (warehousesData[0]) {
+          setSourceWarehouseId(warehousesData[0].id);
+          setTargetWarehouseId(warehousesData[0].id);
+        }
+      })
+      .catch(() => {
+        setError("Could not load products or warehouses");
       });
   }, []);
 
@@ -70,12 +90,28 @@ export function DocumentForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if ((type === "DELIVERY" || type === "TRANSFER") && !sourceWarehouseId) {
+      setError("Select a source warehouse");
+      return;
+    }
+    if ((type === "RECEIPT" || type === "TRANSFER") && !targetWarehouseId) {
+      setError("Select a destination warehouse");
+      return;
+    }
+    if (type === "TRANSFER" && sourceWarehouseId === targetWarehouseId) {
+      setError("Source and destination warehouse must be different");
+      return;
+    }
+
     setLoading(true);
     const payload = {
       type,
       partnerName,
       invoiceNo,
       docDate,
+      sourceWarehouseId: type === "DELIVERY" || type === "TRANSFER" ? sourceWarehouseId : undefined,
+      targetWarehouseId: type === "RECEIPT" || type === "TRANSFER" ? targetWarehouseId : undefined,
       lines: lines.map((l) => ({
         productId: l.productId,
         quantity: parseInt(l.quantity, 10),
@@ -115,7 +151,7 @@ export function DocumentForm({
           />
         </div>
         <div>
-          <label className="text-xs text-zinc-500">Invoice No.</label>
+          <label className="text-xs text-zinc-500">Reference No.</label>
           <input
             required
             value={invoiceNo}
@@ -135,9 +171,49 @@ export function DocumentForm({
         </div>
       </div>
 
+      {(type === "DELIVERY" || type === "RECEIPT" || type === "TRANSFER") && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(type === "DELIVERY" || type === "TRANSFER") && (
+            <div>
+              <label className="text-xs text-zinc-500">Source warehouse</label>
+              <select
+                required
+                value={sourceWarehouseId}
+                onChange={(e) => setSourceWarehouseId(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+              >
+                {warehouses.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} ({w.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(type === "RECEIPT" || type === "TRANSFER") && (
+            <div>
+              <label className="text-xs text-zinc-500">Destination warehouse</label>
+              <select
+                required
+                value={targetWarehouseId}
+                onChange={(e) => setTargetWarehouseId(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+              >
+                {warehouses.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} ({w.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-xl border border-zinc-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-50 text-zinc-600 border-b border-zinc-200">
+          <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600">
             <tr>
               <th className="px-3 py-2 text-left">Product</th>
               <th className="px-3 py-2 text-left">Quantity</th>
@@ -198,7 +274,14 @@ export function DocumentForm({
       <button
         type="button"
         onClick={() =>
-          setLines((prev) => [...prev, { productId: products[0]?.id ?? "", quantity: "1", unitPrice: products[0] ? String(products[0].unitPrice) : "" }])
+          setLines((prev) => [
+            ...prev,
+            {
+              productId: products[0]?.id ?? "",
+              quantity: "1",
+              unitPrice: products[0] ? String(products[0].unitPrice) : "",
+            },
+          ])
         }
         className="text-sm text-zinc-900 hover:underline"
       >

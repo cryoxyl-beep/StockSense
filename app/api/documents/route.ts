@@ -5,10 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const createSchema = z.object({
-  type: z.enum(["RECEIPT", "DELIVERY"]),
+  type: z.enum(["RECEIPT", "DELIVERY", "TRANSFER"]),
   partnerName: z.string().min(1),
   invoiceNo: z.string().min(1),
   docDate: z.string(),
+  sourceWarehouseId: z.string().optional(),
+  targetWarehouseId: z.string().optional(),
   lines: z
     .array(
       z.object({
@@ -31,6 +33,8 @@ export async function GET(request: Request) {
     where: type ? { type } : undefined,
     orderBy: { docDate: "desc" },
     include: {
+      sourceWarehouse: true,
+      targetWarehouse: true,
       lines: { include: { product: true } },
     },
   });
@@ -44,12 +48,42 @@ export async function POST(request: Request) {
 
   try {
     const body = createSchema.parse(await request.json());
+    if (body.type === "RECEIPT" && !body.targetWarehouseId) {
+      return NextResponse.json({ error: "Destination warehouse is required for receipts" }, { status: 400 });
+    }
+    if (body.type === "DELIVERY" && !body.sourceWarehouseId) {
+      return NextResponse.json({ error: "Source warehouse is required for deliveries" }, { status: 400 });
+    }
+    if (body.type === "TRANSFER") {
+      if (!body.sourceWarehouseId || !body.targetWarehouseId) {
+        return NextResponse.json({ error: "Both source and destination warehouses are required for transfers" }, { status: 400 });
+      }
+      if (body.sourceWarehouseId === body.targetWarehouseId) {
+        return NextResponse.json({ error: "Source and destination warehouses must be different" }, { status: 400 });
+      }
+    }
+    const warehouseIds = [body.sourceWarehouseId, body.targetWarehouseId].filter(Boolean) as string[];
+    if (warehouseIds.length > 0) {
+      const existingCount = await prisma.warehouse.count({ where: { id: { in: warehouseIds } } });
+      if (existingCount !== new Set(warehouseIds).size) {
+        return NextResponse.json({ error: "Invalid warehouse selection" }, { status: 400 });
+      }
+    }
+
     const document = await prisma.stockDocument.create({
       data: {
         type: body.type,
         partnerName: body.partnerName,
         invoiceNo: body.invoiceNo,
         docDate: new Date(body.docDate),
+        sourceWarehouseId:
+          body.type === "DELIVERY" || body.type === "TRANSFER"
+            ? body.sourceWarehouseId
+            : null,
+        targetWarehouseId:
+          body.type === "RECEIPT" || body.type === "TRANSFER"
+            ? body.targetWarehouseId
+            : null,
         createdById: session.userId,
         lines: {
           create: body.lines.map((line) => ({

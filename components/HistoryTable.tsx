@@ -10,6 +10,7 @@ type Entry = {
   at: string;
   product: { name: string };
   document: { invoiceNo: string; partnerName: string };
+  warehouse: { code: string; name: string };
 };
 
 export function HistoryTable() {
@@ -44,13 +45,14 @@ export function HistoryTable() {
               <th className="px-4 py-3">Invoice</th>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Quantity</th>
+              <th className="px-4 py-3">Warehouse</th>
               <th className="px-4 py-3">Total</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                   No movements yet
                 </td>
               </tr>
@@ -59,7 +61,13 @@ export function HistoryTable() {
                 <tr key={row.id} className="border-t border-zinc-200">
                   <td className="px-4 py-3">{row.product.name}</td>
                   <td className="px-4 py-3">
-                    {row.movement === "RECEIPT" ? "Received" : "Delivered"}
+                    {row.movement === "RECEIPT"
+                      ? "Received"
+                      : row.movement === "DELIVERY"
+                        ? "Delivered"
+                        : row.movement === "TRANSFER_IN"
+                          ? "Transfer In"
+                          : "Transfer Out"}
                   </td>
                   <td className="px-4 py-3 text-zinc-500">{row.document.invoiceNo}</td>
                   <td className="px-4 py-3 text-zinc-500">
@@ -68,6 +76,7 @@ export function HistoryTable() {
                   <td className="px-4 py-3">
                     {row.quantityDelta > 0 ? `+${row.quantityDelta}` : row.quantityDelta}
                   </td>
+                  <td className="px-4 py-3 text-zinc-500">{row.warehouse.code}</td>
                   <td className="px-4 py-3">₹{Number(row.lineTotal).toFixed(2)}</td>
                 </tr>
               ))

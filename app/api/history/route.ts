@@ -14,12 +14,14 @@ export async function GET(request: Request) {
     include: {
       product: true,
       document: true,
+      warehouse: true,
     },
     where: q
       ? {
           OR: [
             { product: { name: { contains: q } } },
             { document: { invoiceNo: { contains: q } } },
+            { warehouse: { name: { contains: q } } },
           ],
         }
       : undefined,

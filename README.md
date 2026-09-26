@@ -1,69 +1,114 @@
 # StockSense
 
-A modern, highly polished, modular inventory management system built for speed and clarity. StockSense handles end-to-end supply chain stock flows: tracking products across warehouses, processing incoming receipts, dispatching deliveries with balance checks, and logging immutable stock ledger movements.
+StockSense is a modular inventory management system for warehouse operations. It tracks stock across warehouses, validates inbound/outbound/transfer documents, and keeps an immutable movement ledger for auditability.
 
 ![Tech Stack](https://img.shields.io/badge/Next.js%2016-App%20Router-black?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React%2019-white?style=flat-square&logo=react&logoColor=%2361DAFB)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS%204-white?style=flat-square&logo=tailwindcss&logoColor=%2306B6D4)
 ![Prisma ORM](https://img.shields.io/badge/Prisma-ORM-white?style=flat-square&logo=prisma&logoColor=%232D3748)
-![SQLite/Postgres](https://img.shields.io/badge/Database-SQLite%20%7C%20Postgres-white?style=flat-square&logo=postgresql&logoColor=%234169E1)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-white?style=flat-square&logo=postgresql&logoColor=%234169E1)
 
-## What is it?
-StockSense brings clarity to your warehouse operations with real-time stock ledgers and modular inventory control. Features include:
-- **Stock Tracking:** Monitor real-time quantities and low-stock alerts.
-- **Catalog Management:** Add warehouses and products (SKU, UoM, pricing, reorder points).
-- **Orders (Receipts & Deliveries):** Full draft-to-validate workflow ensuring strict stock integrity.
-- **Immutable Ledger:** Full audit trail of every single stock movement.
-- **Beautiful UI:** Highly polished, interactive, modern SaaS interface.
+## Features
 
-## Prerequisites
-- **Node.js** 20 or higher
-- **npm** or **yarn** or **pnpm**
-- *(Optional)* Docker Desktop if you prefer running PostgreSQL instead of the default SQLite.
+- **Advanced analytics dashboard**
+  - 14-day inbound vs outbound movement trends
+  - Top-moving SKUs (30-day velocity)
+  - Pending document counters (receipts, deliveries, transfers)
+- **Smart low-stock predictions**
+  - Velocity-driven stockout window estimates
+  - Suggested reorder quantities from reorder threshold + on-hand stock
+- **Warehouse transfer workflow**
+  - Draft-to-validate transfer documents
+  - Source/destination warehouse validation
+  - Dual ledger postings (`TRANSFER_OUT` and `TRANSFER_IN`)
+- **Core inventory operations**
+  - Product + warehouse management
+  - Receipts and deliveries with stock integrity checks
+  - Immutable stock ledger with searchable movement history
 
-## How to use it locally
+## Architecture (high level)
 
-By default, StockSense runs instantly using a local **SQLite** database (`prisma/dev.db`), meaning you don't need any complex infrastructure to try it out.
+- **Frontend:** Next.js App Router pages and client components
+- **API layer:** Route handlers under `app/api/*`
+- **Business logic:** Inventory validation and stock mutation rules in `lib/inventory.ts`
+- **Data layer:** Prisma ORM models for products, balances, documents, and ledger
+- **Auth:** Cookie-based session flow (`lib/auth.ts`, `middleware.ts`)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/cryoxyl-beep/StockSense.git
-   cd StockSense
-   ```
+## Data model (core entities)
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+- `Warehouse` — stock locations
+- `Product` — SKU master catalog
+- `StockBalance` — per-product, per-warehouse on-hand quantity
+- `StockDocument` — draft/done receipt, delivery, transfer documents
+- `StockDocumentLine` — document line items
+- `StockLedger` — immutable movement entries (`RECEIPT`, `DELIVERY`, `TRANSFER_IN`, `TRANSFER_OUT`)
 
-3. **Environment Setup:**
-   ```bash
-   cp .env.example .env
-   ```
-   *(Update your `.env` with a secure `SESSION_SECRET` and `RESEND_API_KEY` for password resets if needed).*
+## Workflows
 
-4. **Initialize Database:**
-   ```bash
-   npx prisma migrate dev --name init
-   npm run db:seed
-   ```
+### 1) Receipts
+1. Create draft receipt with destination warehouse and lines.
+2. Validate receipt.
+3. Quantities are incremented in destination warehouse.
+4. Ledger records `RECEIPT` entries.
 
-5. **Start Development Server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000)
+### 2) Deliveries
+1. Create draft delivery with source warehouse and lines.
+2. Validate delivery.
+3. System checks stock sufficiency, then decrements source stock.
+4. Ledger records `DELIVERY` entries.
 
-**Demo Credentials (if you ran the seed script):**
-- **Email:** `admin@stocksense.local`
-- **Password:** `admin123`
+### 3) Transfers
+1. Create draft transfer with source + destination warehouses.
+2. Validate transfer.
+3. System checks source stock, then moves quantities atomically.
+4. Ledger records both `TRANSFER_OUT` and `TRANSFER_IN` entries.
 
-## Deploying to Production (Vercel)
+## Getting started
 
-If you plan to deploy StockSense to Vercel or another serverless platform, you **must use a cloud database** (like Vercel Postgres, Supabase, or Neon) since Vercel does not support local SQLite files.
-1. Create a cloud Postgres database.
-2. Change the `provider` in `prisma/schema.prisma` from `"sqlite"` to `"postgresql"`.
-3. Set your `DATABASE_URL` in Vercel to your new cloud database connection string.
-4. Deploy!
+### Prerequisites
+- Node.js 20+
+- npm (or yarn/pnpm)
+- PostgreSQL (local/docker/cloud)
 
-*(Note: This repository includes a placeholder `requirements.txt` for tooling compatibility, but the project is Node.js/TypeScript and dependencies are managed via `package.json`).*
+### Local setup
+
+```bash
+git clone https://github.com/cryoxyl-beep/StockSense.git
+cd StockSense
+npm install
+cp .env.example .env
+npx prisma migrate dev --name init
+npm run db:seed
+npm run dev
+```
+
+Open: `http://localhost:3000`
+
+### Demo credentials
+- Email: `admin@stocksense.local`
+- Password: `admin123`
+
+## Environment variables
+
+- `DATABASE_URL` — PostgreSQL connection string
+- `SESSION_SECRET` — session signing secret
+- `RESEND_API_KEY` — optional (password reset emails)
+
+## Deploying (Vercel)
+
+1. Provision cloud PostgreSQL (Neon, Supabase, Vercel Postgres, etc.).
+2. Set `DATABASE_URL` in Vercel project settings.
+3. Set `SESSION_SECRET` and optional `RESEND_API_KEY`.
+4. Deploy.
+
+## Suggested screenshot sections for product page
+
+If you are preparing a richer product page/portfolio, include:
+- Dashboard analytics view (trend + predictions)
+- Transfer creation form
+- Transfer validation detail page
+- Ledger showing transfer in/out rows
+
+## Notes
+
+`requirements.txt` is intentionally a placeholder for tooling compatibility. This project is Node.js/TypeScript and dependency management is handled through `package.json`.

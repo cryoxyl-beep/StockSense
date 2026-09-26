@@ -8,6 +8,7 @@ import {
   Warehouse, 
   ArrowDownToLine, 
   ArrowUpFromLine, 
+  ArrowLeftRight,
   History,
   LogOut,
   Package2
@@ -19,6 +20,7 @@ const links = [
   { href: "/inventory", label: "Inventory", icon: Warehouse },
   { href: "/orders/receipts", label: "Receipts", icon: ArrowDownToLine },
   { href: "/orders/deliveries", label: "Deliveries", icon: ArrowUpFromLine },
+  { href: "/orders/transfers", label: "Transfers", icon: ArrowLeftRight },
   { href: "/history", label: "Ledger", icon: History },
 ];
 

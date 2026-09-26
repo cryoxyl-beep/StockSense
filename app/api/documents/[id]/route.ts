@@ -13,6 +13,8 @@ export async function GET(
   const document = await prisma.stockDocument.findUnique({
     where: { id },
     include: {
+      sourceWarehouse: true,
+      targetWarehouse: true,
       lines: { include: { product: true } },
     },
   });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { InventoryError, validateDelivery, validateReceipt } from "@/lib/inventory";
+import { InventoryError, validateDelivery, validateReceipt, validateTransfer } from "@/lib/inventory";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -19,8 +19,10 @@ export async function POST(
   try {
     if (document.type === "RECEIPT") {
       await validateReceipt(id);
-    } else {
+    } else if (document.type === "DELIVERY") {
       await validateDelivery(id);
+    } else {
+      await validateTransfer(id);
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
