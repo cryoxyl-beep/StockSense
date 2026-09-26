@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Warehouse = { id: string; name: string; code: string };
 
@@ -19,16 +19,17 @@ export function InventoryForms() {
   const [initialQty, setInitialQty] = useState("0");
   const [warehouseId, setWarehouseId] = useState("");
 
-  async function loadWarehouses() {
+  const loadWarehouses = useCallback(async () => {
     const res = await fetch("/api/warehouses");
     const data = await res.json();
     setWarehouses(data);
-    if (data[0] && !warehouseId) setWarehouseId(data[0].id);
-  }
+    setWarehouseId((prev) => prev || data[0]?.id || "");
+  }, []);
 
   useEffect(() => {
-    loadWarehouses();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadWarehouses();
+  }, [loadWarehouses]);
 
   async function submitWarehouse(e: React.FormEvent) {
     e.preventDefault();

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Package2 } from "lucide-react";
 import { useState, useRef } from "react";
 
