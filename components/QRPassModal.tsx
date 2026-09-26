@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { QrCode, Download, X } from "lucide-react";
 
 export function QRPassModal({ qrSeed, role }: { qrSeed: string; role: string }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const downloadQR = () => {
     const svg = document.getElementById("qr-pass");
@@ -37,9 +43,9 @@ export function QRPassModal({ qrSeed, role }: { qrSeed: string; role: string }) 
         My QR Pass
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl relative">
+      {open && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setOpen(false)}
               className="absolute right-4 top-4 p-1 text-zinc-400 hover:text-zinc-900 rounded-full hover:bg-zinc-100 transition"
@@ -69,7 +75,8 @@ export function QRPassModal({ qrSeed, role }: { qrSeed: string; role: string }) 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
