@@ -29,7 +29,7 @@ export function AuthShell({
   };
 
   return (
-    <div className="flex min-h-screen bg-[#fafaf9]">
+    <div className="flex min-h-screen bg-[#F9F6F0]">
       {/* Left Pane - Visual */}
       <div 
         ref={containerRef}
