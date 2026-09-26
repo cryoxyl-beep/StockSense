@@ -23,7 +23,7 @@ async function getDashboardData() {
   const last14 = new Date(now.getTime() - 14 * DAY_MS);
   const last30 = new Date(now.getTime() - 30 * DAY_MS);
 
-  const [products, pendingReceipts, pendingDeliveries, pendingTransfers, recentLedger] =
+  const [products, pendingReceipts, pendingDeliveries, pendingTransfers, recentLedger, draftDocuments] =
     await Promise.all([
       prisma.product.findMany({
         include: {
@@ -44,6 +44,10 @@ async function getDashboardData() {
         where: { at: { gte: last14 } },
         orderBy: { at: "asc" },
         include: { product: true },
+      }),
+      prisma.stockDocument.findMany({
+        where: { status: DocumentStatus.DRAFT },
+        include: { lines: true },
       }),
     ]);
 
@@ -113,6 +117,45 @@ async function getDashboardData() {
     })
     .slice(0, 6);
 
+  const pendingByProduct = new Map<string, { inbound: number; outbound: number }>();
+  draftDocuments.forEach((doc) => {
+    doc.lines.forEach((line) => {
+      const current = pendingByProduct.get(line.productId) ?? { inbound: 0, outbound: 0 };
+      if (doc.type === DocumentType.RECEIPT) current.inbound += line.quantity;
+      if (doc.type === DocumentType.DELIVERY) current.outbound += line.quantity;
+      pendingByProduct.set(line.productId, current);
+    });
+  });
+
+  const demandSupply = products
+    .map((p) => {
+      const qty = p.balances.reduce((sum, b) => sum + b.quantity, 0);
+      const outbound30 = p.ledger.reduce((sum, l) => sum + Math.abs(l.quantityDelta), 0);
+      const demandDaily = outbound30 / 30;
+      const pending = pendingByProduct.get(p.id) ?? { inbound: 0, outbound: 0 };
+      const projectedDemand30 = outbound30 + pending.outbound;
+      const projectedSupply30 = qty + pending.inbound;
+      const gap = projectedSupply30 - projectedDemand30;
+      const compatibilityScore =
+        projectedDemand30 <= 0 ? 100 : Math.max(0, Math.min(100, (projectedSupply30 / projectedDemand30) * 100));
+      const action =
+        gap < 0 ? "Expedite replenishment" : gap <= p.reorderLevel ? "Monitor closely" : "Healthy";
+
+      return {
+        id: p.id,
+        sku: p.sku,
+        qty,
+        projectedDemand30,
+        projectedSupply30,
+        gap,
+        compatibilityScore,
+        action,
+      };
+    })
+    .filter((row) => row.gap < 0 || row.compatibilityScore < 110)
+    .sort((a, b) => a.compatibilityScore - b.compatibilityScore)
+    .slice(0, 8);
+
   return {
     productCount,
     lowStockCount: lowStockProducts.length,
@@ -122,6 +165,7 @@ async function getDashboardData() {
     trends,
     topMoving,
     predictions,
+    demandSupply,
   };
 }
 
@@ -243,6 +287,47 @@ export default async function DashboardPage() {
                       {Number.isFinite(item.daysLeft) ? `${Math.ceil(item.daysLeft)} days` : "Stable"}
                     </td>
                     <td className="px-3 py-2">{Math.max(item.reorderQty, 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-zinc-200 bg-white/60 p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-indigo-600" />
+          <h2 className="text-sm font-semibold text-zinc-900">Demand vs Supply Compatibility (30 days)</h2>
+        </div>
+        {data.demandSupply.length === 0 ? (
+          <p className="text-sm text-zinc-500">Demand and supply are currently balanced across active SKUs.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 text-zinc-600">
+                <tr>
+                  <th className="px-3 py-2">SKU</th>
+                  <th className="px-3 py-2">On-hand</th>
+                  <th className="px-3 py-2">Projected demand</th>
+                  <th className="px-3 py-2">Projected supply</th>
+                  <th className="px-3 py-2">Gap</th>
+                  <th className="px-3 py-2">Compatibility</th>
+                  <th className="px-3 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.demandSupply.map((item) => (
+                  <tr key={item.id} className="border-t border-zinc-200">
+                    <td className="px-3 py-2 font-medium text-zinc-900">{item.sku}</td>
+                    <td className="px-3 py-2">{item.qty}</td>
+                    <td className="px-3 py-2">{Math.round(item.projectedDemand30)}</td>
+                    <td className="px-3 py-2">{Math.round(item.projectedSupply30)}</td>
+                    <td className={`px-3 py-2 ${item.gap < 0 ? "text-rose-700" : "text-zinc-700"}`}>{Math.round(item.gap)}</td>
+                    <td className={`px-3 py-2 ${item.compatibilityScore < 100 ? "text-rose-700" : "text-emerald-700"}`}>
+                      {item.compatibilityScore.toFixed(0)}%
+                    </td>
+                    <td className="px-3 py-2">{item.action}</td>
                   </tr>
                 ))}
               </tbody>
