@@ -13,6 +13,8 @@ import {
   Package2
 } from "lucide-react";
 
+import { QRPassModal } from "./QRPassModal";
+
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/stock", label: "Stock", icon: Package },
@@ -22,7 +24,7 @@ const links = [
   { href: "/history", label: "Ledger", icon: History },
 ];
 
-export function Sidebar({ email }: { email: string }) {
+export function Sidebar({ user }: { user: any }) {
   const pathname = usePathname();
 
   return (
@@ -63,9 +65,14 @@ export function Sidebar({ email }: { email: string }) {
       </div>
 
       <div className="border-t border-zinc-100 p-4">
+        {user.qrSeed && (
+          <div className="mb-4">
+            <QRPassModal qrSeed={user.qrSeed} role={user.role} />
+          </div>
+        )}
         <div className="mb-3 px-2">
-          <p className="truncate text-sm font-medium text-zinc-900">{email}</p>
-          <p className="text-xs text-zinc-500">Warehouse Admin</p>
+          <p className="truncate text-sm font-medium text-zinc-900">{user.email}</p>
+          <p className="text-xs text-zinc-500 capitalize">{user.role.toLowerCase()}</p>
         </div>
         <form action="/api/auth/logout" method="POST">
           <button

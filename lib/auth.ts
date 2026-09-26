@@ -19,6 +19,8 @@ function getSecret() {
 export type SessionPayload = {
   userId: string;
   email: string;
+  role: string;
+  qrSeed: string | null;
 };
 
 export async function hashPassword(password: string) {
@@ -60,8 +62,10 @@ export async function getSession(): Promise<SessionPayload | null> {
     const { payload } = await jwtVerify(token, getSecret());
     const userId = payload.userId as string;
     const email = payload.email as string;
+    const role = (payload.role as string) || "STAFF";
+    const qrSeed = (payload.qrSeed as string) || null;
     if (!userId || !email) return null;
-    return { userId, email };
+    return { userId, email, role, qrSeed };
   } catch {
     return null;
   }
@@ -75,14 +79,15 @@ export async function requireSession() {
   return session;
 }
 
-export async function registerUser(email: string, password: string) {
+export async function registerUser(email: string, password: string, role: string = "STAFF") {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new Error("EMAIL_EXISTS");
   }
   const passwordHash = await hashPassword(password);
+  const qrSeed = crypto.randomUUID(); // generate a secure seed
   return prisma.user.create({
-    data: { email, passwordHash },
+    data: { email, passwordHash, role: role as any, qrSeed },
   });
 }
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { DemandChart } from "./DemandChart";
 
 type ProductRow = {
   id: string;
@@ -19,6 +20,16 @@ export function StockTable() {
   const [showLowOnly, setShowLowOnly] = useState(searchParams.get("filter") === "low");
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -89,25 +100,41 @@ export function StockTable() {
               displayedRows.map((row) => {
                 const qty = row.balances.reduce((s, b) => s + b.quantity, 0);
                 const isLow = qty <= Math.max(20, row.reorderLevel);
+                const isExpanded = expandedRows.has(row.id);
                 
                 return (
-                  <tr key={row.id} className={`border-t border-zinc-200 transition-colors ${isLow ? "bg-red-50/40" : ""}`}>
-                    <td className="px-4 py-3 font-medium text-zinc-900">{row.name}</td>
-                    <td className="px-4 py-3 text-zinc-500">{row.sku}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className={isLow ? "font-bold text-red-600" : "text-zinc-700"}>{qty}</span>
-                        {isLow && (
-                          <div className="group relative flex items-center justify-center h-4 w-4">
-                            <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700">{qty}</td>
-                    <td className="px-4 py-3 text-zinc-600">₹{Number(row.unitPrice).toFixed(2)}</td>
-                  </tr>
+                  <Fragment key={row.id}>
+                    <tr 
+                      onClick={() => toggleRow(row.id)}
+                      className={`border-t border-zinc-200 transition-colors cursor-pointer hover:bg-zinc-100/50 ${isLow ? "bg-red-50/40" : ""}`}
+                    >
+                      <td className="px-4 py-3 font-medium text-zinc-900 flex items-center gap-2">
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
+                        {row.name}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-500">{row.sku}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className={isLow ? "font-bold text-red-600" : "text-zinc-700"}>{qty}</span>
+                          {isLow && (
+                            <div className="group relative flex items-center justify-center h-4 w-4">
+                              <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-red-400 opacity-75"></span>
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700">{qty}</td>
+                      <td className="px-4 py-3 text-zinc-600">₹{Number(row.unitPrice).toFixed(2)}</td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className="bg-zinc-50/50 border-t border-zinc-100">
+                        <td colSpan={5} className="p-4">
+                          <DemandChart productId={row.id} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })
             )}

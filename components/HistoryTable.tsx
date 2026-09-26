@@ -65,8 +65,12 @@ export function HistoryTable() {
                   <td className="px-4 py-3 text-zinc-500">
                     {new Date(row.at).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3">
-                    {row.quantityDelta > 0 ? `+${row.quantityDelta}` : row.quantityDelta}
+                  <td className="px-4 py-3 font-medium">
+                    {row.quantityDelta > 0 ? (
+                      <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">+ {row.quantityDelta}</span>
+                    ) : (
+                      <span className="text-red-600 bg-red-50 px-2 py-1 rounded-md">- {Math.abs(row.quantityDelta)}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">₹{Number(row.lineTotal).toFixed(2)}</td>
                 </tr>

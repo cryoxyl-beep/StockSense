@@ -10,6 +10,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [role, setRole] = useState("STAFF");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export default function SignupPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
     setLoading(false);
     if (!res.ok) {
@@ -63,6 +64,20 @@ export default function SignupPage() {
             onChange={(e) => setEmail(e.target.value)}
             className={authInputClass}
           />
+        </div>
+        <div>
+          <label className={authLabelClass} htmlFor="role">
+            Role
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className={authInputClass}
+          >
+            <option value="STAFF">Warehouse Staff</option>
+            <option value="ADMIN">Warehouse Admin</option>
+          </select>
         </div>
         <div>
           <label className={authLabelClass} htmlFor="password">

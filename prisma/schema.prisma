@@ -7,10 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  STAFF
+}
+
 model User {
   id           String          @id @default(cuid())
   email        String          @unique
   passwordHash String
+  role         Role            @default(STAFF)
+  qrSeed       String?         @unique
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   documents    StockDocument[]
@@ -74,6 +81,7 @@ model StockBalance {
 enum DocumentType {
   RECEIPT
   DELIVERY
+  TRANSFER
 }
 
 enum DocumentStatus {
@@ -82,21 +90,25 @@ enum DocumentStatus {
 }
 
 model StockDocument {
-  id          String              @id @default(cuid())
-  type        DocumentType
-  status      DocumentStatus      @default(DRAFT)
-  partnerName String
-  invoiceNo   String
-  docDate     DateTime
-  createdById String
-  createdBy   User                @relation(fields: [createdById], references: [id])
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  lines       StockDocumentLine[]
-  ledger      StockLedger[]
+  id                String              @id @default(cuid())
+  type              DocumentType
+  status            DocumentStatus      @default(DRAFT)
+  partnerName       String
+  invoiceNo         String
+  docDate           DateTime
+  createdById       String
+  sourceWarehouseId String?
+  targetWarehouseId String?
+  createdBy         User                @relation(fields: [createdById], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  lines             StockDocumentLine[]
+  ledger            StockLedger[]
 
   @@index([type, status])
   @@index([docDate])
+  @@index([sourceWarehouseId])
+  @@index([targetWarehouseId])
 }
 
 model StockDocumentLine {
@@ -115,6 +127,8 @@ model StockDocumentLine {
 enum MovementType {
   RECEIPT
   DELIVERY
+  TRANSFER_IN
+  TRANSFER_OUT
 }
 
 model StockLedger {
@@ -125,10 +139,12 @@ model StockLedger {
   at            DateTime      @default(now())
   productId     String
   documentId    String
+  warehouseId   String?
   product       Product       @relation(fields: [productId], references: [id])
   document      StockDocument @relation(fields: [documentId], references: [id])
 
   @@index([at])
   @@index([productId])
   @@index([documentId])
+  @@index([warehouseId])
 }
