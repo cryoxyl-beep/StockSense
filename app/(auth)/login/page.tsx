@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { AuthShell, authButtonClass, authInputClass, authLabelClass } from "@/components/AuthShell";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const resetDone = useSearchParams().get("reset") === "1";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,48 +33,68 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-        <h1 className="text-2xl font-semibold text-rose-400">StockSense</h1>
-        <p className="mt-1 text-sm text-zinc-500">Sign in to your inventory dashboard</p>
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          <div>
-            <label className="text-xs text-zinc-400">Email ID</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-rose-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-zinc-400">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-rose-500"
-            />
-          </div>
-          {error && <p className="text-sm text-rose-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-rose-500 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
-          >
-            {loading ? "Signing in…" : "Login"}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-zinc-500">
-          No account?{" "}
-          <Link href="/signup" className="text-rose-400 hover:underline">
-            Sign up
+    <AuthShell
+      title="Log in"
+      subtitle="Use your work email to open the inventory dashboard."
+      footer={
+        <>
+          New here?{" "}
+          <Link href="/signup" className="font-medium text-zinc-900 hover:underline hover:underline-offset-4">
+            Create an account
           </Link>
-        </p>
-        <p className="mt-2 text-center text-xs text-zinc-600">Forgot password — coming soon</p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <label className={authLabelClass} htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={authInputClass}
+          />
+        </div>
+        <div>
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <label className={authLabelClass} htmlFor="password" style={{ marginBottom: 0 }}>
+              Password
+            </label>
+            <Link href="/forgot" className="text-[13px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
+              Forgot password?
+            </Link>
+          </div>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={authInputClass}
+          />
+        </div>
+        {resetDone && !error ? (
+          <p className="text-[13px] font-medium text-emerald-600">Password updated. Log in with the new one.</p>
+        ) : null}
+        {error ? <p className="text-[13px] font-medium text-red-500">{error}</p> : null}
+        <button type="submit" disabled={loading} className={authButtonClass}>
+          {loading ? "Signing in" : "Continue"}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

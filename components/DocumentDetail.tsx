@@ -64,10 +64,10 @@ export function DocumentDetail({
 
   return (
     <div className="max-w-3xl space-y-6">
-      <Link href={listHref} className="text-sm text-rose-400 hover:underline">
+      <Link href={listHref} className="text-sm text-zinc-900 hover:underline">
         ← Back to list
       </Link>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs text-zinc-500">Order ID</p>
@@ -75,7 +75,7 @@ export function DocumentDetail({
           </div>
           <span
             className={
-              doc.status === "DONE" ? "text-emerald-400" : "text-amber-400"
+              doc.status === "DONE" ? "text-emerald-400" : "text-amber-600 text-amber-700 font-medium"
             }
           >
             {doc.status}
@@ -97,9 +97,9 @@ export function DocumentDetail({
         </dl>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-xl border border-zinc-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-950 text-zinc-400">
+          <thead className="bg-zinc-50 text-zinc-600 border-b border-zinc-200">
             <tr>
               <th className="px-4 py-2 text-left">Product</th>
               <th className="px-4 py-2 text-left">Qty</th>
@@ -109,7 +109,7 @@ export function DocumentDetail({
           </thead>
           <tbody>
             {doc.lines.map((line, i) => (
-              <tr key={i} className="border-t border-zinc-800">
+              <tr key={i} className="border-t border-zinc-200">
                 <td className="px-4 py-2">{line.product.name}</td>
                 <td className="px-4 py-2">{line.quantity}</td>
                 <td className="px-4 py-2">₹{Number(line.unitPrice).toFixed(2)}</td>
@@ -123,7 +123,7 @@ export function DocumentDetail({
       </div>
 
       <p className="text-sm">Total: ₹{total.toFixed(2)}</p>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error && <p className="text-sm text-zinc-900">{error}</p>}
 
       {doc.status === "DRAFT" && (
         <button

@@ -44,18 +44,18 @@ export function DocumentList({
           placeholder="Search orders…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
         />
         <Link
           href={newHref}
-          className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600"
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
         >
           {type === "RECEIPT" ? "New receipt" : "New delivery"}
         </Link>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-xl border border-zinc-200">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-zinc-950 text-zinc-400">
+          <thead className="bg-zinc-50 text-zinc-600 border-b border-zinc-200">
             <tr>
               <th className="px-4 py-3">Product</th>
               <th className="px-4 py-3">Status</th>
@@ -73,7 +73,7 @@ export function DocumentList({
               </tr>
             ) : (
               filtered.map((doc) => (
-                <tr key={doc.id} className="border-t border-zinc-800">
+                <tr key={doc.id} className="border-t border-zinc-200">
                   <td className="px-4 py-3">
                     {doc.lines.map((l) => l.product.name).join(", ") || "—"}
                   </td>
@@ -82,7 +82,7 @@ export function DocumentList({
                       className={
                         doc.status === "DONE"
                           ? "text-emerald-400"
-                          : "text-amber-400"
+                          : "text-amber-600 text-amber-700 font-medium"
                       }
                     >
                       {doc.status}
@@ -91,12 +91,12 @@ export function DocumentList({
                   <td className="px-4 py-3">
                     <Link
                       href={`${detailPrefix}/${doc.id}`}
-                      className="text-rose-400 hover:underline"
+                      className="text-zinc-900 hover:underline"
                     >
                       {doc.id.slice(0, 8)}…
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-400">
+                  <td className="px-4 py-3 text-zinc-500">
                     {new Date(doc.docDate).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">{doc.partnerName}</td>

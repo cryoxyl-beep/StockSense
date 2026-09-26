@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 
 const SESSION_COOKIE = "stocksense_session";
 
-const publicPaths = ["/login", "/signup"];
+const publicPaths = ["/login", "/signup", "/forgot", "/reset"];
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -39,7 +39,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isAuthenticated && (pathname === "/login" || pathname === "/signup")) {
+  if (
+    isAuthenticated &&
+    (pathname === "/login" ||
+      pathname === "/signup" ||
+      pathname === "/forgot" ||
+      pathname === "/reset")
+  ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

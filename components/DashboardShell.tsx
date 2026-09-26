@@ -8,9 +8,13 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-zinc-900 text-zinc-100">
+    <div className="flex h-screen bg-zinc-50/50">
       <Sidebar email={email} />
-      <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
+      <main className="flex-1 overflow-auto">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:px-8 lg:py-12">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

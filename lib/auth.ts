@@ -1,6 +1,8 @@
+import { randomInt } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { sendResetCode } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "stocksense_session";
@@ -90,4 +92,68 @@ export async function loginUser(email: string, password: string) {
     throw new Error("INVALID_CREDENTIALS");
   }
   return user;
+}
+
+const OTP_TTL_MS = 10 * 60 * 1000;
+
+export async function issuePasswordReset(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return { issued: false as const };
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("MAIL_NOT_CONFIGURED");
+  }
+
+  const code = String(randomInt(100000, 1000000));
+  const codeHash = await hashPassword(code);
+
+  await prisma.passwordReset.deleteMany({ where: { email } });
+  await prisma.passwordReset.create({
+    data: {
+      email,
+      codeHash,
+      expiresAt: new Date(Date.now() + OTP_TTL_MS),
+    },
+  });
+
+  try {
+    await sendResetCode(email, code);
+  } catch (error) {
+    await prisma.passwordReset.deleteMany({ where: { email } });
+    throw error;
+  }
+
+  return { issued: true as const };
+}
+
+export async function resetPasswordWithOtp(email: string, code: string, password: string) {
+  const resets = await prisma.passwordReset.findMany({
+    where: { email, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  let matched = false;
+  for (const reset of resets) {
+    if (await verifyPassword(code, reset.codeHash)) {
+      matched = true;
+      break;
+    }
+  }
+
+  if (!matched) {
+    throw new Error("INVALID_OTP");
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new Error("INVALID_OTP");
+  }
+
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
+    prisma.passwordReset.deleteMany({ where: { email } }),
+  ]);
 }

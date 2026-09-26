@@ -106,38 +106,38 @@ export function DocumentForm({
     <form onSubmit={onSubmit} className="max-w-3xl space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
-          <label className="text-xs text-zinc-400">{partnerLabel}</label>
+          <label className="text-xs text-zinc-500">{partnerLabel}</label>
           <input
             required
             value={partnerName}
             onChange={(e) => setPartnerName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
           />
         </div>
         <div>
-          <label className="text-xs text-zinc-400">Invoice No.</label>
+          <label className="text-xs text-zinc-500">Invoice No.</label>
           <input
             required
             value={invoiceNo}
             onChange={(e) => setInvoiceNo(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
           />
         </div>
         <div>
-          <label className="text-xs text-zinc-400">Date</label>
+          <label className="text-xs text-zinc-500">Date</label>
           <input
             type="date"
             required
             value={docDate}
             onChange={(e) => setDocDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
           />
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-xl border border-zinc-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-950 text-zinc-400">
+          <thead className="bg-zinc-50 text-zinc-600 border-b border-zinc-200">
             <tr>
               <th className="px-3 py-2 text-left">Product</th>
               <th className="px-3 py-2 text-left">Quantity</th>
@@ -150,13 +150,13 @@ export function DocumentForm({
               const lineTotal =
                 (parseFloat(line.unitPrice) || 0) * (parseInt(line.quantity, 10) || 0);
               return (
-                <tr key={index} className="border-t border-zinc-800">
+                <tr key={index} className="border-t border-zinc-200">
                   <td className="px-3 py-2">
                     <select
                       required
                       value={line.productId}
                       onChange={(e) => updateLine(index, { productId: e.target.value })}
-                      className="w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1"
+                      className="w-full rounded border border-zinc-300 bg-white px-2 py-1"
                     >
                       <option value="">Select…</option>
                       {products.map((p) => (
@@ -173,7 +173,7 @@ export function DocumentForm({
                       required
                       value={line.quantity}
                       onChange={(e) => updateLine(index, { quantity: e.target.value })}
-                      className="w-24 rounded border border-zinc-700 bg-zinc-950 px-2 py-1"
+                      className="w-24 rounded border border-zinc-300 bg-white px-2 py-1"
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -184,10 +184,10 @@ export function DocumentForm({
                       required
                       value={line.unitPrice}
                       onChange={(e) => updateLine(index, { unitPrice: e.target.value })}
-                      className="w-28 rounded border border-zinc-700 bg-zinc-950 px-2 py-1"
+                      className="w-28 rounded border border-zinc-300 bg-white px-2 py-1"
                     />
                   </td>
-                  <td className="px-3 py-2 text-zinc-400">₹{lineTotal.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-zinc-500">₹{lineTotal.toFixed(2)}</td>
                 </tr>
               );
             })}
@@ -200,19 +200,19 @@ export function DocumentForm({
         onClick={() =>
           setLines((prev) => [...prev, { productId: products[0]?.id ?? "", quantity: "1", unitPrice: products[0] ? String(products[0].unitPrice) : "" }])
         }
-        className="text-sm text-rose-400 hover:underline"
+        className="text-sm text-zinc-900 hover:underline"
       >
         + Add line
       </button>
 
-      <p className="text-sm text-zinc-400">Grand total: ₹{total.toFixed(2)}</p>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      <p className="text-sm text-zinc-500">Grand total: ₹{total.toFixed(2)}</p>
+      {error && <p className="text-sm text-zinc-900">{error}</p>}
 
       <div className="flex gap-3">
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
         >
           {loading ? "Saving…" : "Save draft"}
         </button>

@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DocumentStatus, DocumentType } from "@prisma/client";
+import { 
+  ArrowRight,
+  Package,
+  AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Activity
+} from "lucide-react";
 
 async function getStats() {
   const [productCount, balances, pendingReceipts, pendingDeliveries] = await Promise.all([
@@ -22,50 +30,75 @@ async function getStats() {
 export default async function DashboardPage() {
   const stats = await getStats();
 
-  const cards = [
-    { label: "Total Products", value: stats.productCount, href: "/stock" },
-    { label: "Low / Out of Stock", value: stats.lowStock, href: "/stock" },
-    { label: "Pending Receipts", value: stats.pendingReceipts, href: "/orders/receipts" },
-    { label: "Pending Deliveries", value: stats.pendingDeliveries, href: "/orders/deliveries" },
+  const metrics = [
+    { label: "Total Products", value: stats.productCount, icon: Package, href: "/stock", color: "text-blue-600", bg: "bg-blue-100/50" },
+    { label: "Low Stock Items", value: stats.lowStock, icon: AlertTriangle, href: "/stock", color: "text-amber-600", bg: "bg-amber-100/50" },
+    { label: "Pending Receipts", value: stats.pendingReceipts, icon: ArrowDownToLine, href: "/orders/receipts", color: "text-emerald-600", bg: "bg-emerald-100/50" },
+    { label: "Pending Deliveries", value: stats.pendingDeliveries, icon: ArrowUpFromLine, href: "/orders/deliveries", color: "text-indigo-600", bg: "bg-indigo-100/50" },
   ];
 
   const shortcuts = [
-    { href: "/stock", title: "Stock", desc: "View on-hand quantities" },
-    { href: "/inventory", title: "Inventory", desc: "Warehouses & products" },
-    { href: "/orders/receipts", title: "Orders — Receipts", desc: "Incoming goods" },
-    { href: "/orders/deliveries", title: "Orders — Delivery", desc: "Outgoing goods" },
-    { href: "/history", title: "History", desc: "Stock ledger" },
+    { href: "/stock", title: "View Stock Levels", desc: "Check real-time quantities across all warehouses", icon: Package },
+    { href: "/orders/receipts/new", title: "Receive Goods", desc: "Log incoming vendor shipments", icon: ArrowDownToLine },
+    { href: "/orders/deliveries/new", title: "Dispatch Delivery", desc: "Process outgoing customer orders", icon: ArrowUpFromLine },
+    { href: "/history", title: "Audit Ledger", desc: "Trace every stock movement", icon: Activity },
   ];
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
-      <p className="mt-1 text-sm text-zinc-500">Inventory operations snapshot</p>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => (
-          <Link
-            key={card.label}
-            href={card.href}
-            className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 hover:border-rose-500/40"
-          >
-            <p className="text-xs text-zinc-500">{card.label}</p>
-            <p className="mt-2 text-3xl font-semibold text-rose-300">{card.value}</p>
-          </Link>
-        ))}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Dashboard</h1>
+        <p className="mt-2 text-sm text-zinc-500">Your inventory operations snapshot for today.</p>
       </div>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {shortcuts.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-xl border border-zinc-800 p-4 hover:bg-zinc-950"
-          >
-            <p className="font-medium">{item.title}</p>
-            <p className="text-sm text-zinc-500">{item.desc}</p>
-          </Link>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <Link
+              key={metric.label}
+              href={metric.href}
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-zinc-500">{metric.label}</p>
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${metric.bg}`}>
+                  <Icon className={`h-4 w-4 ${metric.color}`} />
+                </div>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <p className="text-3xl font-semibold tracking-tight text-zinc-900">{metric.value}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="pt-8">
+        <h2 className="text-lg font-medium tracking-tight text-zinc-900 mb-4">Quick Actions</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {shortcuts.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-50 border border-zinc-100 group-hover:bg-white transition-colors">
+                  <Icon className="h-5 w-5 text-zinc-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-zinc-900">{item.title}</p>
+                  <p className="text-sm text-zinc-500">{item.desc}</p>
+                </div>
+                <div className="pr-2 text-zinc-600 transition-transform group-hover:translate-x-1 group-hover:text-zinc-600">
+                  <ArrowRight className="h-5 w-5" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

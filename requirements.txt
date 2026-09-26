@@ -1,0 +1,5 @@
+# StockSense is a Next.js (Node/TypeScript) project.
+# Dependencies are managed in package.json and installed via `npm install`.
+# This file is provided for reference for automated tools expecting it.
+
+# Equivalent Python/Data stack requirements (if this had a python backend) would go here.

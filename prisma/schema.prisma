@@ -18,6 +18,17 @@ model User {
   @@index([email])
 }
 
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
 model Warehouse {
   id        String         @id @default(cuid())
   name      String
