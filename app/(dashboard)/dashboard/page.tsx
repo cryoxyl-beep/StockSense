@@ -22,7 +22,7 @@ async function getStats() {
     }),
   ]);
 
-  const lowStock = balances.filter((b) => b.quantity <= b.product.reorderLevel).length;
+  const lowStock = balances.filter((b) => b.quantity <= Math.max(20, b.product.reorderLevel)).length;
 
   return { productCount, lowStock, pendingReceipts, pendingDeliveries };
 }
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
 
   const metrics = [
     { label: "Total Products", value: stats.productCount, icon: Package, href: "/stock", color: "text-blue-600", bg: "bg-blue-100/50" },
-    { label: "Low Stock Items", value: stats.lowStock, icon: AlertTriangle, href: "/stock", color: "text-amber-600", bg: "bg-amber-100/50" },
+    { label: "Low Stock Items", value: stats.lowStock, icon: AlertTriangle, href: "/stock?filter=low", color: "text-amber-600", bg: "bg-amber-100/50" },
     { label: "Pending Receipts", value: stats.pendingReceipts, icon: ArrowDownToLine, href: "/orders/receipts", color: "text-emerald-600", bg: "bg-emerald-100/50" },
     { label: "Pending Deliveries", value: stats.pendingDeliveries, icon: ArrowUpFromLine, href: "/orders/deliveries", color: "text-indigo-600", bg: "bg-indigo-100/50" },
   ];
