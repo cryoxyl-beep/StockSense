@@ -66,4 +66,4 @@ If you plan to deploy StockSense to Vercel or another serverless platform, you *
 3. Set your `DATABASE_URL` in Vercel to your new cloud database connection string.
 4. Deploy!
 
-*(Note: There is no `requirements.txt` file as this is a Node.js/TypeScript project, not Python. All dependencies are managed via `package.json`).*
+*(Note: This repository includes a placeholder `requirements.txt` for tooling compatibility, but the project is Node.js/TypeScript and dependencies are managed via `package.json`).*
