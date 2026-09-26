@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             <Link
               key={metric.label}
               href={metric.href}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white/60 backdrop-blur-sm p-5 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-zinc-500">{metric.label}</p>
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
               <Link
                 key={item.title}
                 href={item.href}
-                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
+                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white/60 backdrop-blur-sm p-4 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-50 border border-zinc-100 group-hover:bg-white transition-colors">
                   <Icon className="h-5 w-5 text-zinc-600" />

@@ -112,7 +112,7 @@ export function AuthShell({
 }
 
 export const authInputClass =
-  "block w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] text-zinc-900 placeholder-zinc-400 shadow-sm transition-all focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950 hover:border-zinc-300 sm:text-[14px]";
+  "block w-full appearance-none rounded-lg border border-zinc-200 bg-white/50 px-3 py-2 text-[14px] text-zinc-900 placeholder-zinc-400 shadow-sm transition-all focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950 hover:border-zinc-300 hover:bg-white/80 sm:text-[14px]";
 
 export const authButtonClass =
   "flex w-full justify-center rounded-lg bg-zinc-950 px-4 py-2.5 text-[14px] font-medium text-white shadow-sm hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:opacity-50 transition-all duration-200 hover:-translate-y-[1px] hover:scale-[1.01] hover:shadow-md active:translate-y-0 active:scale-[0.98] active:shadow-sm";

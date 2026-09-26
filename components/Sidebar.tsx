@@ -26,7 +26,7 @@ export function Sidebar({ email }: { email: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 bg-white">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 bg-white/40 backdrop-blur-sm">
       <div className="flex h-16 items-center border-b border-zinc-100 px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-950">
