@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  INVENTORY_MANAGER
+  WAREHOUSE_STAFF
+}
+
+enum OperationStatus {
+  DRAFT
+  WAITING
+  READY
+  DONE
+  CANCELED
+}
+
+enum OperationType {
+  RECEIPT
+  DELIVERY
+  INTERNAL_TRANSFER
+  ADJUSTMENT
+}
+
+enum LocationType {
+  INTERNAL
+  VENDOR
+  CUSTOMER
+  INVENTORY_LOSS
+  PRODUCTION
+  TRANSIT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(WAREHOUSE_STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  passwordResetOtps PasswordResetOtp[]
+  receipts          Receipt[]
+  deliveries        Delivery[]
+  transfers         InternalTransfer[]
+  adjustments       Adjustment[]
+  ledgerEntries     StockLedger[]
+}
+
+model PasswordResetOtp {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  name       String
+  sku        String   @unique
+  uom        String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  stocks          Stock[]
+  reorderRules    ReorderRule[]
+  receiptItems    ReceiptItem[]
+  deliveryItems   DeliveryItem[]
+  transferItems   InternalTransferItem[]
+  adjustmentItems AdjustmentItem[]
+  ledgerEntries   StockLedger[]
+}
+
+model Warehouse {
+  id        String     @id @default(cuid())
+  name      String
+  code      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  locations Location[]
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  name        String
+  code        String
+  type        LocationType @default(INTERNAL)
+  warehouseId String?
+  warehouse   Warehouse?   @relation(fields: [warehouseId], references: [id])
+  parentId    String?
+  parent      Location?    @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children    Location[]   @relation("LocationHierarchy")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  stocks           Stock[]
+  reorderRules     ReorderRule[]
+  receipts         Receipt[]          @relation("ReceiptDestination")
+  deliveries       Delivery[]         @relation("DeliverySource")
+  transfersFrom    InternalTransfer[] @relation("TransferFrom")
+  transfersTo      InternalTransfer[] @relation("TransferTo")
+  adjustmentItems  AdjustmentItem[]
+  ledgerFrom       StockLedger[]      @relation("LedgerFrom")
+  ledgerTo         StockLedger[]      @relation("LedgerTo")
+
+  @@unique([warehouseId, code])
+  @@index([parentId])
+}
+
+model Stock {
+  id               String   @id @default(cuid())
+  productId        String
+  locationId       String
+  quantity         Decimal  @default(0) @db.Decimal(18, 4)
+  reservedQuantity Decimal  @default(0) @db.Decimal(18, 4)
+  product          Product  @relation(fields: [productId], references: [id])
+  location         Location @relation(fields: [locationId], references: [id])
+  updatedAt        DateTime @updatedAt
+
+  @@unique([productId, locationId])
+}
+
+model ReorderRule {
+  id          String    @id @default(cuid())
+  productId   String
+  locationId  String?
+  minQuantity Decimal   @db.Decimal(18, 4)
+  maxQuantity Decimal?  @db.Decimal(18, 4)
+  product     Product   @relation(fields: [productId], references: [id])
+  location    Location? @relation(fields: [locationId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([productId, locationId])
+}
+
+model Receipt {
+  id              String          @id @default(cuid())
+  reference       String          @unique
+  status          OperationStatus @default(DRAFT)
+  supplier        String?
+  destinationId   String?
+  destination     Location?       @relation("ReceiptDestination", fields: [destinationId], references: [id])
+  notes           String?
+  createdById     String?
+  createdBy       User?           @relation(fields: [createdById], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  items           ReceiptItem[]
+
+  @@index([status])
+}
+
+model ReceiptItem {
+  id        String  @id @default(cuid())
+  receiptId String
+  productId String
+  quantity  Decimal @db.Decimal(18, 4)
+  receipt   Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([receiptId])
+}
+
+model Delivery {
+  id          String          @id @default(cuid())
+  reference   String          @unique
+  status      OperationStatus @default(DRAFT)
+  customer    String?
+  sourceId    String?
+  source      Location?       @relation("DeliverySource", fields: [sourceId], references: [id])
+  notes       String?
+  createdById String?
+  createdBy   User?           @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       DeliveryItem[]
+
+  @@index([status])
+}
+
+model DeliveryItem {
+  id         String   @id @default(cuid())
+  deliveryId String
+  productId  String
+  quantity   Decimal  @db.Decimal(18, 4)
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@index([deliveryId])
+}
+
+model InternalTransfer {
+  id             String          @id @default(cuid())
+  reference      String          @unique
+  status         OperationStatus @default(DRAFT)
+  fromLocationId String?
+  toLocationId   String?
+  fromLocation   Location?       @relation("TransferFrom", fields: [fromLocationId], references: [id])
+  toLocation     Location?       @relation("TransferTo", fields: [toLocationId], references: [id])
+  notes          String?
+  scheduledAt    DateTime?
+  createdById    String?
+  createdBy      User?           @relation(fields: [createdById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  items          InternalTransferItem[]
+
+  @@index([status])
+}
+
+model InternalTransferItem {
+  id         String           @id @default(cuid())
+  transferId String
+  productId  String
+  quantity   Decimal          @db.Decimal(18, 4)
+  transfer   InternalTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  product    Product          @relation(fields: [productId], references: [id])
+
+  @@index([transferId])
+}
+
+model Adjustment {
+  id          String          @id @default(cuid())
+  reference   String          @unique
+  status      OperationStatus @default(DRAFT)
+  reason      String?
+  notes       String?
+  createdById String?
+  createdBy   User?           @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       AdjustmentItem[]
+
+  @@index([status])
+}
+
+model AdjustmentItem {
+  id           String     @id @default(cuid())
+  adjustmentId String
+  productId    String
+  locationId   String
+  quantity     Decimal    @db.Decimal(18, 4)
+  adjustment   Adjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  product      Product    @relation(fields: [productId], references: [id])
+  location     Location   @relation(fields: [locationId], references: [id])
+
+  @@index([adjustmentId])
+}
+
+/// Append-only stock audit trail. Do not update or delete rows.
+model StockLedger {
+  id             String        @id @default(cuid())
+  productId      String
+  operationType  OperationType
+  reference      String
+  quantity       Decimal       @db.Decimal(18, 4)
+  fromLocationId String?
+  toLocationId   String?
+  userId         String?
+  createdAt      DateTime      @default(now())
+  product        Product       @relation(fields: [productId], references: [id])
+  fromLocation   Location?     @relation("LedgerFrom", fields: [fromLocationId], references: [id])
+  toLocation     Location?     @relation("LedgerTo", fields: [toLocationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@index([productId, createdAt])
+  @@index([reference])
+  @@index([operationType])
+}
